@@ -34,6 +34,57 @@ class ConsoleAnimation():
         for i in self.colum:
             print(i)
             time.sleep(Constants["columDelay"])
+
+class RegularSearch():
+    ''' Class for the search using regular expressions '''
+
+    def change_folder_path(self, newPath):
+        pass
+
+    def get_nums(self):
+        pass
+
+    def get_nums_with_brackets(self):
+        pass
+
+    def get_letters(self):
+        pass
+
+    def get_letters_with_brackets(self):
+        pass
+
+    def get_capitalletters(self):
+        pass
+
+    def get_capitalletters_with_brackets(self):
+        pass
+
+    def set_custom(self, customMethod):
+        pass
+
+    def get_custom(self):
+        pass
+
+    def search(self, stringToFind):
+        pass
+
+class CommandRunner():
+    '''Class which describes commands'''     
+
+    def __init__(self):
+        self.lastCommand = ''
+
+    def create(self, objectsToCreate):
+        pass
+
+    def move(self, objectsToMove, pathToPaste):
+        pass
+
+    def rename(self, objectsToRename, finalObjectsName):
+        pass
+
+    def delete(self, objectsToDelete):
+        pass
         
 class CreateHierarchy():
     """ 'Create' mode realisation """
