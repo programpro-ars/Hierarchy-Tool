@@ -1,2 +1,5 @@
 # Visual Studio Code workspace
 *.code-workspace
+
+# Mac Os system file
+.DS_Store
