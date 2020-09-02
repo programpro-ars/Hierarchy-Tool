@@ -10,7 +10,7 @@
 import os
 import time
 
-Constants = {"lineDelay": 0.02, "columDelay": 0.07}
+Constants = {"lineDelay": 0.01, "columDelay": 0.05}
 
 class ConsoleAnimation():
     """The class with animation source"""
