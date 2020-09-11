@@ -10,7 +10,7 @@
 import os
 import time
 
-Constants = {"lineDelay": 0.01, "columDelay": 0.05}
+Constants = {"lineDelay": 0.01, "columDelay": 0.05, "levelStep": 4}
 
 class ConsoleAnimation():
     """The class with animation source"""
@@ -41,7 +41,7 @@ class RegularSearch():
     def change_folder_path(self, newPath):
         pass
 
-    def get_nums(self):
+    def get_nums(self, count):
         pass
 
     def get_nums_with_brackets(self):
@@ -67,72 +67,46 @@ class RegularSearch():
 
     def search(self, stringToFind):
         pass
-
-class CommandRunner():
-    '''Class which describes commands'''     
-
-    def __init__(self):
-        self.lastCommand = ''
-
-    def create(self, objectsToCreate):
-        pass
-
-    def move(self, objectsToMove, pathToPaste):
-        pass
-
-    def rename(self, objectsToRename, finalObjectsName):
-        pass
-
-    def delete(self, objectsToDelete):
-        pass
-        
-class CreateHierarchy():
-    """ 'Create' mode realisation """
     
-    def __init__(self):
-        ''' Initialise 'Create' mode '''
-        self.consoleAnimator = ConsoleAnimation()
+class HierarchyTool():
+    """ Main functionality """
 
-        print("\nStarting 'Create' mode")
-        self.consoleAnimator.lineAnimate("######################\n\n")
-        
-        # choose the name and the path
+    def __init__(self):
+        """ Initialise the tool """
+        self.consoleAnimator = ConsoleAnimation()
+        self.regularSearch = RegularSearch()
+        self.level = 1
+
+        # choose the path
         while True:
             try:
                 self.path = input("Path to the folder: ")
                 os.chdir(self.path)
-                self.name = input("Name of the folder: ")
-                os.mkdir(self.name)
                 break
             except:
-                print("! Path or name doesn't exist !\n")
+                print("\n! Path doesn't exist !\n")
+                continue
+        self.rootPath = self.path
 
         self.consoleAnimator.addStringToColum("\n###########################\n")
-        self.consoleAnimator.addStringToColum("Launching Hierarchy Creator\n")
+        self.consoleAnimator.addStringToColum("Launching Hierarchy Manager\n")
         self.consoleAnimator.addStringToColum("###########################\n\n")
 
-        # Create root folder
-        self.level = 1
-        print(("#" * self.level) + " " + self.name)
-        self.path = os.path.join(self.path, self.name)
-        os.chdir(self.path)
-        self.level += 2
+        print("\n-- " + self.path + " --")
+        print('-' * (len(self.path) + 6))
 
         self.main()
 
     def main(self):
-        ''' Main mode functionality method '''
+        """ Command Runner """
 
-        previosCommand = ""
-        isFile = True
-
-        # Main loop
+        # main loop
         while True:
-            self.consoleAnimator.lineAnimate((self.level * "#") + " ")
-            lastCommand = input()
+            self.consoleAnimator.lineAnimate("#" * self.level + ": ")
+            userInput = input()
 
             # Exit condition
-            if not(lastCommand):
+            if not(userInput):
                 print("\n###################")
                 print("# (Y)es - exit    #")
                 print("# (N)o - continue #")
@@ -141,64 +115,146 @@ class CreateHierarchy():
                 if command.lower() == "y" or command.lower() == "yes":
                     break
                 else:
+                    print("\n", end="")
                     continue
-    
-            # Path check
-            if os.path.exists(os.path.join(self.path, lastCommand)):
-                print("! This Name was used in the folder !")
-                continue
-            
-            # Command condition
-            if lastCommand == ">" and self.level != 3:
-                self.level -= 2
-                while self.path[-2] != '\\' and self.path[-2] != '/':
-                    self.path = self.path[:-1]
-                self.path = self.path[:-1] 
-                os.chdir(self.path)
-                continue
-            elif lastCommand == ">":
-                print("! You are on the root level !")
-                continue
-            elif lastCommand == "<" and isFile == True:
-                print("! Command '<' doesn't work without directory name !")
-                continue
-            elif lastCommand == "<":
-                self.level += 2
-                self.path = os.path.join(self.path, previosCommand)
-                os.chdir(self.path)
-                previosCommand = lastCommand
-                continue
 
-            # File checking
-            if lastCommand.find('.') == -1:
-                isFile = False
-            else:
-                isFile = True
-
-            # Create object
-            try:
-                if isFile:
-                    with open(os.path.join(lastCommand), "w"):
-                        pass
+            # Fast commands condition
+            if len(userInput) == 1:
+                if userInput == ">":
+                    self.goTop()
+                    continue
+                elif userInput == "?":
+                    self.getCurrentPlace()
+                    continue
+                elif userInput == "*":
+                    self.showAll()
+                    continue
                 else:
-                    os.mkdir(os.path.join(self.path, lastCommand))
-            except:
-                print("! Creation Error !")
+                    print("\n! Unknown command !\n")
+                    continue
+
+            # Format the user input
+            if userInput[-1] == "<":
+                userInput = userInput[:-2]
+                self.goDown(userInput)
                 continue
+            else:
+                wordSize = 0
+                for letter in userInput:
+                    if letter != " ":
+                        wordSize += 1 
+                    else:
+                        break 
 
-            previosCommand = lastCommand
+                currentCommand = userInput[:wordSize]
+                userInput = userInput[wordSize + 1:]
 
-class ManageHierarchy():
-    """ 'Manage' mode realisation """
-    pass
+                # Run simple commands
+            if currentCommand == "cr" or currentCommand == "create":
+                self.create(userInput)
+            elif currentCommand == "dl" or currentCommand == "delete":
+                self.delete(userInput)
+            elif currentCommand == "sr" or currentCommand == "search":
+                self.search(userInput)
+            else:
+                # Setup some values
+                leftSide = ""
+                rightSide = ""
+                isLeftSide = True
+                userInput = list(userInput.split(" "))
 
-class Main():
-    """ Main functionality """
+                # Separate the user input
+                for word in userInput:
+                    if word != "->":
+                        if isLeftSide:
+                            leftSide += word + " "
+                        else:
+                            rightSide += word + " "
+                    else:
+                        isLeftSide = False
+
+                # Run complex commands
+                if isLeftSide:
+                    print("\n! Wrond command !\n")
+                else:
+                    leftSide = leftSide[:-1]
+                    rightSide = rightSide[:-1]
+                    if currentCommand == "rn" or currentCommand == "rename":
+                        self.rename(leftSide, rightSide)
+                    elif currentCommand == "mv" or currentCommand == "move":
+                        self.move(leftSide, rightSide)
+                    else:
+                        print("\n! Unknown command !\n")
+
+    def goTop(self):
+
+        if self.path == self.rootPath:
+            print("\n! You are on the root level !\n")
+        else:
+            self.level -= Constants["levelStep"]
+            while self.path[-2] != os.sep:
+                self.path = self.path[:-1]
+            self.path = self.path[:-1] 
+            os.chdir(self.path)
+
+    def getCurrentPlace(self):
+        print("\n" + self.path + "\n")
+
+    def showAll(self):
+        pass
+
+    def goDown(self, folder_name):
+
+        try:
+            if os.path.exists(os.path.join(self.path, folder_name)):
+                self.path = os.path.join(self.path, folder_name)
+                os.chdir(self.path)
+                self.level += Constants["levelStep"]
+            else:
+                print("\n! Folder " + folder_name + " does not exist !\n")
+        except:
+            print("\n! Path changing error !\n")
+
+    def create(self, object_name):
+
+        if os.path.exists(os.path.join(self.path, object_name)):
+            print("\n! This name was used in the current folder !\n")
+            return
+
+        if object_name.find('.') == -1:
+            isFile = False
+        else:
+            isFile = True
+
+        try:
+            if isFile:
+                with open(os.path.join(object_name), "w"):
+                    pass
+            else:
+                os.mkdir(os.path.join(self.path, object_name))
+        except:
+                print("\n! Creation error !\n")
+        
+
+    def delete(self, regular_expression):
+        pass
+
+    def search(self, regular_expression):
+        pass
+
+    def rename(self, previous_names, new_names):
+        pass
+
+    def move(self, regular_expression, new_path):
+        pass
+
+class Start():
+    """ Start the program """
 
     def __init__(self):
-        ''' Start menu launching '''
+        ''' 'Start Menu' launching '''
         consoleAnimator = ConsoleAnimation()
-        consoleAnimator.addStringToColum("##########")
+        consoleAnimator.addStringToColum("\n##########")
         consoleAnimator.addStringToColum("Created by")
         consoleAnimator.addStringToColum("Arseniy Arsentyew <programpro.ars@gmail.com>")
         consoleAnimator.addStringToColum("############################################")
@@ -212,31 +268,11 @@ class Main():
         consoleAnimator.addStringToColum("")
         consoleAnimator.addStringToColum("############################################")
         consoleAnimator.addStringToColum("")
-        consoleAnimator.addStringToColum("Choose the mode:")
-        consoleAnimator.addStringToColum("")
-        consoleAnimator.addStringToColum('1. "Create" (0)')
-        consoleAnimator.addStringToColum('2. "Manage" (1)')
-        consoleAnimator.addStringToColum("")
 
         consoleAnimator.columAnimate()
 
-        # Chose the tool
-        while True:
-            mode = input("Your choice: ")
-
-            if mode == "0" or mode.lower() == "create":
-                modeManager = CreateHierarchy()
-                break
-            elif mode == "1" or mode.lower() == "manage":
-                modeManager = ManageHierarchy()
-                break
-            else:
-                print("Select mode from the list:")
-                print("\n", end="")
-                print('1. "Create" (0)')
-                print('2. "Manage" (1)')
-                print("\n", end="")
+        startProgram = HierarchyTool()
 
 # Run program
 if __name__ == "__main__":
-    program = Main()
+    program = Start()
