@@ -8,9 +8,11 @@
 ############################################################
 
 import os
+import re
 import time
-
-Constants = {"lineDelay": 0.01, "columDelay": 0.05, "levelStep": 4}
+import shutil
+ 
+Constants = {"lineDelay": 0.01, "columDelay": 0.05, "levelStep": 3}
 
 class ConsoleAnimation():
     """The class with animation source"""
@@ -37,27 +39,31 @@ class ConsoleAnimation():
 
 class RegularSearch():
     ''' Class for the search using regular expressions '''
+    def __init__(self):
+        self.number = 1
 
-    def change_folder_path(self, newPath):
-        pass
+    def find(self, regular_expression):
+        allObjects = os.listdir()
+        resultList = []
+        try:
+            template = re.compile(regular_expression)
+        except:
+            print("\n! An error in the regular expression !\n")
+            return []
+        for obj in allObjects:
+            result = template.match(obj)
+            if result == None:
+                continue
+            if result.group() == obj:
+                resultList.append(obj)
+        return resultList
 
     def get_nums(self, count):
-        pass
+        self.number += 1
+        return self.number - 1
 
-    def get_nums_with_brackets(self):
-        pass
-
-    def get_letters(self):
-        pass
-
-    def get_letters_with_brackets(self):
-        pass
-
-    def get_capitalletters(self):
-        pass
-
-    def get_capitalletters_with_brackets(self):
-        pass
+    def restart_nums(self):
+        self.number = 1
 
     def set_custom(self, customMethod):
         pass
@@ -86,7 +92,6 @@ class HierarchyTool():
             except:
                 print("\n! Path doesn't exist !\n")
                 continue
-        self.rootPath = self.path
 
         self.consoleAnimator.addStringToColum("\n###########################\n")
         self.consoleAnimator.addStringToColum("Launching Hierarchy Manager\n")
@@ -113,6 +118,7 @@ class HierarchyTool():
                 print("###################")
                 command = input("Your choice: ")
                 if command.lower() == "y" or command.lower() == "yes":
+                    print("\n", end="")
                     break
                 else:
                     print("\n", end="")
@@ -183,12 +189,14 @@ class HierarchyTool():
                         self.rename(leftSide, rightSide)
                     elif currentCommand == "mv" or currentCommand == "move":
                         self.move(leftSide, rightSide)
+                    elif currentCommand == "cp" or currentCommand == "copy":
+                        self.copy(leftSide, rightSide)
                     else:
                         print("\n! Unknown command !\n")
 
     def goTop(self):
 
-        if self.path == self.rootPath:
+        if self.level == 1:
             print("\n! You are on the root level !\n")
         else:
             self.level -= Constants["levelStep"]
@@ -198,10 +206,15 @@ class HierarchyTool():
             os.chdir(self.path)
 
     def getCurrentPlace(self):
-        print("\n" + self.path + "\n")
+        print(self.path)
 
     def showAll(self):
-        pass
+        print("\n", end="")
+        number = 1
+        for obj in os.listdir(self.path):
+            print(str(number) + ") " + obj)
+            number += 1
+        print("\n", end="")
 
     def goDown(self, folder_name):
 
@@ -235,9 +248,14 @@ class HierarchyTool():
         except:
                 print("\n! Creation error !\n")
         
-
     def delete(self, regular_expression):
-        pass
+        objsToDelete = self.regularSearch.find(regular_expression)
+        for obj in objsToDelete:
+            if os.path.isfile(os.path.join(self.path, obj)):
+                os.remove(os.path.join(self.path, obj))
+            else:
+                shutil.rmtree(os.path.join(self.path, obj))
+            print(obj + " has been deleted")
 
     def search(self, regular_expression):
         pass
@@ -246,6 +264,9 @@ class HierarchyTool():
         pass
 
     def move(self, regular_expression, new_path):
+        pass
+
+    def copy(self, regular_expression, new_path):
         pass
 
 class Start():
