@@ -7,12 +7,15 @@
 # This program is sharing with the GNU GPL.v3 license      #
 ############################################################
 
+# Fix the error
 import os
 import re
 import time
 import shutil
+import webbrowser
  
-Constants = {"lineDelay": 0.01, "columDelay": 0.05, "levelStep": 3}
+Constants = {"urlLink": "https://github.com/programpro-ars/Hierarchy-Tool/tree/master/documentation",
+            "lineDelay": 0.01, "columDelay": 0.05, "levelStep": 3}
 
 class ConsoleAnimation():
     """The class with animation source"""
@@ -43,19 +46,25 @@ class RegularSearch():
         self.number = 1
 
     def find(self, regular_expression):
-        allObjects = os.listdir()
         resultList = []
         try:
             template = re.compile(regular_expression)
         except:
             print("\n! An error in the regular expression !\n")
             return []
-        for obj in allObjects:
-            result = template.match(obj)
-            if result == None:
-                continue
-            if result.group() == obj:
-                resultList.append(obj)
+        for root, dirs, files in os.walk("."):
+            for obj in dirs:
+                result = template.match(os.path.join(root, obj)[2:])
+                if result == None:
+                    continue
+                if result.group() == os.path.join(root, obj)[2:]:
+                    resultList.append(os.path.join(root, obj)[2:])
+            for obj in files:
+                result = template.match(os.path.join(root, obj)[2:])
+                if result == None:
+                    continue
+                if result.group() == os.path.join(root, obj)[2:]:
+                    resultList.append(os.path.join(root, obj)[2:])
         return resultList
 
     def get_nums(self, count):
@@ -71,8 +80,27 @@ class RegularSearch():
     def get_custom(self):
         pass
 
-    def search(self, stringToFind):
-        pass
+    def search(self, reregular_expression):
+        resultList = []
+        try:
+            template = re.compile(regular_expression)
+        except:
+            print("\n! An error in the regular expression !\n")
+            return []
+        for root, dirs, files in os.walk("."):
+            for obj in dirs:
+                result = template.match(obj)
+                if result == None:
+                    continue
+                if result.group() == obj:
+                    resultList.append(os.path.join(root, obj)[2:])
+            for obj in files:
+                result = template.match(obj)
+                if result == None:
+                    continue
+                if result.group() == obj:
+                    resultList.append(os.path.join(root, obj)[2:])
+        return resultList
     
 class HierarchyTool():
     """ Main functionality """
@@ -162,6 +190,8 @@ class HierarchyTool():
                 self.delete(userInput)
             elif currentCommand == "sr" or currentCommand == "search":
                 self.search(userInput)
+            elif currentCommand == "help":
+                webbrowser.open(Constants["urlLink"], new=2)
             else:
                 # Setup some values
                 leftSide = ""
@@ -195,7 +225,6 @@ class HierarchyTool():
                         print("\n! Unknown command !\n")
 
     def goTop(self):
-
         if self.level == 1:
             print("\n! You are on the root level !\n")
         else:
@@ -209,27 +238,24 @@ class HierarchyTool():
         print(self.path)
 
     def showAll(self):
-        print("\n", end="")
         number = 1
         for obj in os.listdir(self.path):
-            print(str(number) + ") " + obj)
+            print("*" * self.level + "  " + str(number) + ") " + obj)
             number += 1
-        print("\n", end="")
 
     def goDown(self, folder_name):
-
         try:
             if os.path.exists(os.path.join(self.path, folder_name)):
                 self.path = os.path.join(self.path, folder_name)
                 os.chdir(self.path)
-                self.level += Constants["levelStep"]
+                sepCount = folder_name.count(os.path.sep)
+                self.level += Constants["levelStep"] * (sepCount + 1)
             else:
                 print("\n! Folder " + folder_name + " does not exist !\n")
         except:
             print("\n! Path changing error !\n")
 
     def create(self, object_name):
-
         if os.path.exists(os.path.join(self.path, object_name)):
             print("\n! This name was used in the current folder !\n")
             return
@@ -245,6 +271,7 @@ class HierarchyTool():
                     pass
             else:
                 os.mkdir(os.path.join(self.path, object_name))
+            print("*" * self.level + " comlete")
         except:
                 print("\n! Creation error !\n")
         
@@ -255,16 +282,33 @@ class HierarchyTool():
                 os.remove(os.path.join(self.path, obj))
             else:
                 shutil.rmtree(os.path.join(self.path, obj))
-            print(obj + " has been deleted")
+            print("*" * self.level + " " + obj + " has been deleted")
 
     def search(self, regular_expression):
-        pass
+        objectsToFind = self.regularSearch.search(regular_expression)
+        number = 1
+        for obj in objectsToFind:
+            print(" " * (self.level + 2) + str(number) + ") " + obj)
+            number += 1
 
     def rename(self, previous_names, new_names):
         pass
 
     def move(self, regular_expression, new_path):
-        pass
+        objectsToMove = self.regularSearch.find(regular_expression)
+        if not(os.path.exists(os.path.join(new_path))):
+            print("\n! The path does not exists !\n")
+            return
+
+        for obj in objectsToMove:
+            if os.path.exists(os.path.join(new_path, obj)):
+                print("! " + obj + " is exists in " + new_path + " !")
+            else:
+                try:
+                    shutil.move(os.path.join(self.path, obj), os.path.join(new_path, obj))
+                    print("*" * self.level + " " + obj + " has been moved")
+                except:
+                    print("! An error while " + obj + " moving !")
 
     def copy(self, regular_expression, new_path):
         pass
