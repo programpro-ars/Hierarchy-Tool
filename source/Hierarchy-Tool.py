@@ -14,7 +14,7 @@ import shutil
 import webbrowser
 
 # Some custom values
-Constants = {"urlLink": "https://github.com/programpro-ars/Hierarchy-Tool/tree/master/documentation",
+Constants = {"urlLink": "https://github.com/programpro-ars/Hierarchy-Tool",
             "lineDelay": 0.01, "columDelay": 0.05, "numsLiteral": "<nums>", "customLiteral": "<custom>"}
 
 class ConsoleAnimation():
